@@ -143,6 +143,13 @@ Answer with the problem, not the product.
 **Node not found**
 → Install Node.js LTS from https://nodejs.org
 
+**Creating a vault for a new user (not needed for this guide)**
+→ Your vault is pre-created by Barak. For future users, vault creation is terminal-only:
+```bash
+node ~/cif/dist/bin/create-vault.js
+```
+Passphrase is entered interactively — never through the AI.
+
 ---
 
-*CIF v2.0 | github.com/achillesheel02/cif*
+*CIF v2.1 | github.com/achillesheel02/cif*

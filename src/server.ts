@@ -2,22 +2,21 @@
  * CIF — Convergent Identity Framework MCP Server
  *
  * Provides encrypted identity continuity for Claude across sessions and substrates.
- * Extends claude-improve-mcp with vault tools.
  *
- * Tools:
- *   create_identity      — initialize encrypted vault for a user
+ * Runtime tools (no vault creation — passphrase never passes through the AI layer):
  *   unlock_identity      — decrypt seed at session start
  *   lock_identity        — re-encrypt updated seed at session end
  *   export_continuation  — generate portable encrypted blob for cross-substrate use
  *   rotate_passphrase    — change passphrase without losing the seed
  *   detect_continuation  — detect and decrypt a CIF-CONTINUATION-V2 blob
  *   list_vaults          — show all known vault users
+ *
+ * Vault creation is CLI-only: node dist/bin/create-vault.js
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
-  createIdentity,
   unlockIdentity,
   lockIdentity,
   exportContinuationTool,
@@ -31,21 +30,6 @@ export function createServer(): McpServer {
     name: "cif",
     version: "2.0.0",
   });
-
-  // ── create_identity ──────────────────────────────────────────────────────────
-
-  server.tool(
-    "create_identity",
-    "Initialize an encrypted identity vault for a new user. Stores the seed encrypted with AES-256-GCM (PBKDF2 100k rounds). Run once per user. For Barak: migrates MEMORY.md. For Sean: pass Ψ_Sean_v2.1 as initial_seed.",
-    {
-      passphrase: z.string().describe("Passphrase to encrypt the vault. Never stored — only the derived key is used. Cannot be recovered if lost."),
-      initial_seed: z.string().describe("The initial identity seed (compressed notation). For Barak: contents of MEMORY.md. For new users: the Socratic onboarding seed."),
-      user_id: z.string().describe("User identifier (e.g. 'barak', 'sean'). Used as directory name under ~/.cif-vault/"),
-    },
-    async (params) => ({
-      content: [{ type: "text" as const, text: JSON.stringify(createIdentity(params), null, 2) }],
-    })
-  );
 
   // ── unlock_identity ──────────────────────────────────────────────────────────
 
