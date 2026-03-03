@@ -20,7 +20,7 @@ import {
   appendFileSync,
 } from "fs";
 import { join } from "path";
-import { homedir } from "os";
+import { homedir, userInfo } from "os";
 import {
   type EncryptedBlob,
   encrypt,
@@ -110,12 +110,13 @@ export async function fetchVaultIfMissing(
  * Create a new identity vault for a user.
  * Encrypts the initial_seed and writes it to disk.
  * Fails if vault already exists (safety guard).
+ * Warns if user_id doesn't match the OS system user (cross-identity creation).
  */
 export function createVault(
   userId: string,
   passphrase: string,
   initialSeed: string
-): { success: true; path: string } | { success: false; error: string } {
+): { success: true; path: string; warning?: string } | { success: false; error: string } {
   ensureVaultDir(userId);
   const path = identityPath(userId);
 
@@ -126,12 +127,25 @@ export function createVault(
     };
   }
 
+  // Ownership check: warn if creating a vault for a different identity
+  let warning: string | undefined;
+  try {
+    const systemUser = userInfo().username;
+    if (systemUser && userId !== systemUser) {
+      warning = `WARNING: Creating vault for '${userId}' but system user is '${systemUser}'. ` +
+        `Only create vaults for identities you own. ` +
+        `If this is intentional (e.g. 'barak' vs 'bachillah'), proceed with caution.`;
+    }
+  } catch {
+    // userInfo() failed — skip the check
+  }
+
   const blob = encrypt(initialSeed, passphrase);
   writeFileSync(path, serializeBlob(blob), "utf8");
 
   appendSessionLog(userId, "VAULT_CREATED", `Vault initialized for ${userId}`);
 
-  return { success: true, path };
+  return { success: true, path, ...(warning ? { warning } : {}) };
 }
 
 /**

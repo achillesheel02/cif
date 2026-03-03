@@ -15,15 +15,15 @@ const DB_PATH = join(homedir(), ".claude-improve", "facets.db");
 
 let db: Database.Database | null = null;
 
-export function getDb(): Database.Database {
+/**
+ * Returns the DB connection, or null if claude-improve-mcp is not installed.
+ * CIF operates in degraded mode (no moments) when the DB is absent.
+ */
+export function getDb(): Database.Database | null {
   if (db) return db;
 
   if (!existsSync(DB_PATH)) {
-    throw new Error(
-      `CIF requires claude-improve-mcp to be installed first.\n` +
-      `Expected database at: ${DB_PATH}\n` +
-      `Install claude-improve-mcp and run at least one session to initialize.`
-    );
+    return null; // claude-improve-mcp not installed — moments unavailable, vault still works
   }
 
   db = new Database(DB_PATH);
@@ -72,6 +72,7 @@ export interface Moment {
  */
 export function getRecentMoments(userId: string | null, limit = 50): Moment[] {
   const db = getDb();
+  if (!db) return [];
 
   if (userId) {
     return db
@@ -97,6 +98,7 @@ export function getRecentMoments(userId: string | null, limit = 50): Moment[] {
  */
 export function getMomentsSince(userId: string, since: string): Moment[] {
   const db = getDb();
+  if (!db) return [];
   return db
     .prepare(
       `SELECT * FROM session_moments
@@ -112,6 +114,7 @@ export function getMomentsSince(userId: string, since: string): Moment[] {
  */
 export function getLastSessionId(userId: string): string | null {
   const db = getDb();
+  if (!db) return null;
   const row = db
     .prepare(
       `SELECT session_id FROM session_moments
