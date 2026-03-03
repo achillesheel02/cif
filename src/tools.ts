@@ -1,13 +1,14 @@
 /**
- * CIF Vault MCP Tools
+ * CIF Vault MCP Tools (runtime only — no vault creation)
  *
  * unlock_identity      — decrypt seed, cache key in memory, return seed + moments
  * lock_identity        — compress moments → update seed → re-encrypt → clear key
- * create_identity      — initialize a new vault for a user
  * export_continuation  — encrypted base64 blob for cross-substrate transfer
  * detect_continuation  — detect and decrypt a CIF-CONTINUATION-V2 blob from text
  * rotate_passphrase    — decrypt with old, re-encrypt with new
  * list_vaults          — list all known vault users
+ *
+ * Vault creation: CLI-only via bin/create-vault.ts
  */
 
 import { existsSync, writeFileSync } from "fs";
@@ -20,7 +21,6 @@ import {
   decryptFromBase64,
 } from "./crypto.js";
 import {
-  createVault,
   unlockVault,
   lockVault,
   exportContinuation,
@@ -118,35 +118,6 @@ export function lockIdentity(params: LockParams): Record<string, unknown> {
     success: true,
     user_id: userId,
     message: `Vault locked for ${userId}. Seed updated and re-encrypted. Key cleared from memory.`,
-  };
-}
-
-// ── create_identity ───────────────────────────────────────────────────────────
-
-export interface CreateParams {
-  passphrase: string;
-  initial_seed: string;
-  user_id: string;
-}
-
-export function createIdentity(params: CreateParams): Record<string, unknown> {
-  const result = createVault(params.user_id, params.passphrase, params.initial_seed);
-
-  if (!result.success) {
-    return { success: false, error: result.error };
-  }
-
-  const seedPreview =
-    params.initial_seed.slice(0, 100) +
-    (params.initial_seed.length > 100 ? "..." : "");
-
-  return {
-    success: true,
-    user_id: params.user_id,
-    vault_path: result.path,
-    seed_length: params.initial_seed.length,
-    seed_preview: seedPreview,
-    message: `Vault created for ${params.user_id}. Seed encrypted with AES-256-GCM (PBKDF2 100k rounds). Ready to unlock.`,
   };
 }
 

@@ -10,7 +10,7 @@
 
 import { createInterface } from "readline";
 import { readFileSync } from "fs";
-import { createVault } from "../src/vault.js";
+import { _createVaultCLIOnly as createVault } from "../src/vault.js";
 
 async function ask(question: string): Promise<string> {
   return new Promise((resolve) => {
