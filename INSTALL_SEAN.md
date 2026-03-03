@@ -27,7 +27,12 @@ If not installed: https://nodejs.org (download LTS)
 
 ```bash
 git clone https://github.com/achillesheel02/cif ~/cif
-cd ~/cif && npm install && npm run build
+cd ~/cif && rm -rf node_modules package-lock.json && npm install && npm run build
+```
+
+If `npm install` fails with ENOENT or ENOTEMPTY errors, run:
+```bash
+npm cache clean --force && rm -rf ~/cif/node_modules && npm install && npm run build
 ```
 
 ---
